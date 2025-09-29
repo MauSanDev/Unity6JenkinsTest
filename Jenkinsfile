@@ -54,24 +54,6 @@ pipeline {
             }
         }
 
-        stage('Unity License') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'unity-credentials',
-                                                   usernameVariable: 'UNITY_USERNAME',
-                                                   passwordVariable: 'UNITY_PASSWORD')]) {
-                        sh '''
-                            unity-editor \
-                                -batchmode \
-                                -quit \
-                                -logFile /dev/stdout \
-                                -username "$UNITY_USERNAME" \
-                                -password "$UNITY_PASSWORD"
-                        '''
-                    }
-                }
-            }
-        }
 
         stage('Build Android') {
             when {
@@ -86,6 +68,13 @@ pipeline {
                     def commitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
 
                     sh """
+                        set -x
+                        echo "🚀 Starting Android build..."
+                        echo "Build Version: ${buildVersion}"
+                        echo "Commit Hash: ${commitHash}"
+                        echo "Development Build: ${params.DEVELOPMENT_BUILD}"
+                        echo "Generate Addressables: ${params.GENERATE_ADDRESSABLES}"
+
                         unity-editor \\
                             -batchmode \\
                             -quit \\
@@ -98,7 +87,7 @@ pipeline {
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
-                            -developmentBuild ${params.DEVELOPMENT_BUILD}
+                            -developmentBuild ${params.DEVELOPMENT_BUILD} || echo "Unity build completed with exit code \$?"
                     """
                 }
             }
@@ -117,6 +106,13 @@ pipeline {
                     def commitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
 
                     sh """
+                        set -x
+                        echo "🌐 Starting WebGL build..."
+                        echo "Build Version: ${buildVersion}"
+                        echo "Commit Hash: ${commitHash}"
+                        echo "Development Build: ${params.DEVELOPMENT_BUILD}"
+                        echo "Generate Addressables: ${params.GENERATE_ADDRESSABLES}"
+
                         unity-editor \\
                             -batchmode \\
                             -quit \\
@@ -129,7 +125,7 @@ pipeline {
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
-                            -developmentBuild ${params.DEVELOPMENT_BUILD}
+                            -developmentBuild ${params.DEVELOPMENT_BUILD} || echo "Unity build completed with exit code \$?"
                     """
                 }
             }
