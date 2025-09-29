@@ -29,6 +29,11 @@ pipeline {
             defaultValue: '',
             description: 'Override build version (leave empty for auto: 1.0.BUILD_NUMBER)'
         )
+        string(
+            name: 'BUILD_SUFFIX',
+            defaultValue: '',
+            description: 'Build suffix identifier (leave empty for default: jenkins)'
+        )
     }
 
     environment {
@@ -78,12 +83,14 @@ pipeline {
             steps {
                 script {
                     def buildVersion = params.BUILD_VERSION ?: "1.0.${BUILD_NUMBER}"
+                    def buildSuffix = params.BUILD_SUFFIX ?: "jenkins"
                     def commitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
 
                     sh """
                         set -x
                         echo "🚀 Starting Android build..."
                         echo "Build Version: ${buildVersion}"
+                        echo "Build Suffix: ${buildSuffix}"
                         echo "Commit Hash: ${commitHash}"
                         echo "Development Build: ${params.DEVELOPMENT_BUILD}"
                         echo "Generate Addressables: ${params.GENERATE_ADDRESSABLES}"
@@ -96,7 +103,7 @@ pipeline {
                             -logFile /dev/stdout \\
                             -buildTarget Android \\
                             -buildVersion "${buildVersion}" \\
-                            -buildSuffix "jenkins" \\
+                            -buildSuffix "${buildSuffix}" \\
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
@@ -116,12 +123,14 @@ pipeline {
             steps {
                 script {
                     def buildVersion = params.BUILD_VERSION ?: "1.0.${BUILD_NUMBER}"
+                    def buildSuffix = params.BUILD_SUFFIX ?: "jenkins"
                     def commitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
 
                     sh """
                         set -x
                         echo "🌐 Starting WebGL build..."
                         echo "Build Version: ${buildVersion}"
+                        echo "Build Suffix: ${buildSuffix}"
                         echo "Commit Hash: ${commitHash}"
                         echo "Development Build: ${params.DEVELOPMENT_BUILD}"
                         echo "Generate Addressables: ${params.GENERATE_ADDRESSABLES}"
@@ -134,7 +143,7 @@ pipeline {
                             -logFile /dev/stdout \\
                             -buildTarget WebGL \\
                             -buildVersion "${buildVersion}" \\
-                            -buildSuffix "jenkins" \\
+                            -buildSuffix "${buildSuffix}" \\
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
