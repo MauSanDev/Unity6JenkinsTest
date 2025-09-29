@@ -45,7 +45,7 @@ pipeline {
 
         stage('Force Clean') {
             when {
-                params.FORCE_CLEAN_BUILD == true
+                expression { params.FORCE_CLEAN_BUILD == true }
             }
             steps {
                 echo "⚠️  FORCE CLEAN: This will significantly slow down the build!"
