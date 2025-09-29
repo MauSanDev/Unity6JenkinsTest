@@ -76,8 +76,8 @@ pipeline {
         stage('Build Android') {
             when {
                 anyOf {
-                    params.BUILD_TARGET == 'Android'
-                    params.BUILD_TARGET == 'Both'
+                    expression { params.BUILD_TARGET == 'Android' }
+                    expression { params.BUILD_TARGET == 'Both' }
                 }
             }
             steps {
@@ -107,8 +107,8 @@ pipeline {
         stage('Build WebGL') {
             when {
                 anyOf {
-                    params.BUILD_TARGET == 'WebGL'
-                    params.BUILD_TARGET == 'Both'
+                    expression { params.BUILD_TARGET == 'WebGL' }
+                    expression { params.BUILD_TARGET == 'Both' }
                 }
             }
             steps {
