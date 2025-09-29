@@ -93,17 +93,14 @@ pipeline {
                             -quit \\
                             -projectPath "${UNITY_PROJECT_PATH}" \\
                             -executeMethod BuildScript.BuildBatchMode \\
-                            -logFile android-build.log \\
+                            -logFile /dev/stdout \\
                             -buildTarget Android \\
                             -buildVersion "${buildVersion}" \\
                             -buildSuffix "jenkins" \\
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
-                            -developmentBuild ${params.DEVELOPMENT_BUILD} || echo "Unity build completed with exit code \$?"
-
-                        echo "📄 Displaying Android build log in console:"
-                        cat android-build.log || echo "No Android build log found"
+                            -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee android-build.log || echo "Unity build completed with exit code \$?"
                     """
                 }
             }
@@ -134,17 +131,14 @@ pipeline {
                             -quit \\
                             -projectPath "${UNITY_PROJECT_PATH}" \\
                             -executeMethod BuildScript.BuildBatchMode \\
-                            -logFile webgl-build.log \\
+                            -logFile /dev/stdout \\
                             -buildTarget WebGL \\
                             -buildVersion "${buildVersion}" \\
                             -buildSuffix "jenkins" \\
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
-                            -developmentBuild ${params.DEVELOPMENT_BUILD} || echo "Unity build completed with exit code \$?"
-
-                        echo "📄 Displaying WebGL build log in console:"
-                        cat webgl-build.log || echo "No WebGL build log found"
+                            -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee webgl-build.log || echo "Unity build completed with exit code \$?"
                     """
                 }
             }
