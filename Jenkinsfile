@@ -33,6 +33,9 @@ pipeline {
 
     environment {
         UNITY_PROJECT_PATH = "${WORKSPACE}"
+        UNITY_EMAIL = credentials('unity-email')
+        UNITY_PASSWORD = credentials('unity-password')
+        UNITY_SERIAL = credentials('unity-serial')
     }
 
     stages {
@@ -40,6 +43,16 @@ pipeline {
             steps {
                 echo "Checking out Unity 6 project..."
                 checkout scm
+            }
+        }
+
+        stage('Debug Credentials') {
+            steps {
+                echo "🔍 Verifying Unity credentials are loaded..."
+                echo "Unity Email: ${UNITY_EMAIL}"
+                echo "Unity Serial: ${UNITY_SERIAL}"
+                echo "Unity Password: [MASKED - Jenkins will hide this automatically]"
+                echo "Environment variables set for GameCI activation"
             }
         }
 
@@ -80,7 +93,7 @@ pipeline {
                             -quit \\
                             -projectPath "${UNITY_PROJECT_PATH}" \\
                             -executeMethod BuildScript.BuildBatchMode \\
-                            -logFile /dev/stdout \\
+                            -logFile android-build.log \\
                             -buildTarget Android \\
                             -buildVersion "${buildVersion}" \\
                             -buildSuffix "jenkins" \\
@@ -88,6 +101,9 @@ pipeline {
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
                             -developmentBuild ${params.DEVELOPMENT_BUILD} || echo "Unity build completed with exit code \$?"
+
+                        echo "📄 Displaying Android build log in console:"
+                        cat android-build.log || echo "No Android build log found"
                     """
                 }
             }
@@ -118,7 +134,7 @@ pipeline {
                             -quit \\
                             -projectPath "${UNITY_PROJECT_PATH}" \\
                             -executeMethod BuildScript.BuildBatchMode \\
-                            -logFile /dev/stdout \\
+                            -logFile webgl-build.log \\
                             -buildTarget WebGL \\
                             -buildVersion "${buildVersion}" \\
                             -buildSuffix "jenkins" \\
@@ -126,6 +142,9 @@ pipeline {
                             -buildId "${BUILD_NUMBER}" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
                             -developmentBuild ${params.DEVELOPMENT_BUILD} || echo "Unity build completed with exit code \$?"
+
+                        echo "📄 Displaying WebGL build log in console:"
+                        cat webgl-build.log || echo "No WebGL build log found"
                     """
                 }
             }
@@ -134,6 +153,9 @@ pipeline {
 
     post {
         always {
+            // Archive Unity build logs
+            archiveArtifacts artifacts: '*.log', allowEmptyArchive: true, fingerprint: true
+
             // Archive build artifacts and reports
             archiveArtifacts artifacts: '**/Development/**/*', allowEmptyArchive: true
             archiveArtifacts artifacts: '**/QA/**/*', allowEmptyArchive: true
@@ -142,6 +164,7 @@ pipeline {
             archiveArtifacts artifacts: '**/BuildParameters.json', allowEmptyArchive: true
 
             echo "Build completed on Unity 6 persistent agent with Builder system"
+            echo "📥 Log files archived: android-build.log, webgl-build.log (if generated)"
         }
         success {
             echo "✅ Build successful! Check organized build folders and reports."
