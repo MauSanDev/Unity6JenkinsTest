@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'unity-6-android'  // Unity 6000.0.58f1
+        label 'unity-6-android'  // Unity 6000.0.58f1 with complete Android image
     }
 
     parameters {
@@ -88,16 +88,20 @@ pipeline {
 
                     sh """
                         set -x
-                        echo "🚀 Starting Android build..."
+                        echo "🚀 Starting Android build with JIT bypass..."
                         echo "Build Version: ${buildVersion}"
                         echo "Build Suffix: ${buildSuffix}"
                         echo "Commit Hash: ${commitHash}"
                         echo "Development Build: ${params.DEVELOPMENT_BUILD}"
                         echo "Generate Addressables: ${params.GENERATE_ADDRESSABLES}"
+                        echo "⚠️  Using Mono interpreter mode to bypass JIT crashes"
+
+                        export MONO_ENV_OPTIONS="--interpreter"
 
                         unity-editor \\
                             -batchmode \\
                             -quit \\
+                            -nographics \\
                             -projectPath "${UNITY_PROJECT_PATH}" \\
                             -executeMethod BuildScript.BuildBatchMode \\
                             -logFile /dev/stdout \\
@@ -128,16 +132,20 @@ pipeline {
 
                     sh """
                         set -x
-                        echo "🌐 Starting WebGL build..."
+                        echo "🌐 Starting WebGL build with JIT bypass..."
                         echo "Build Version: ${buildVersion}"
                         echo "Build Suffix: ${buildSuffix}"
                         echo "Commit Hash: ${commitHash}"
                         echo "Development Build: ${params.DEVELOPMENT_BUILD}"
                         echo "Generate Addressables: ${params.GENERATE_ADDRESSABLES}"
+                        echo "⚠️  Using Mono interpreter mode to bypass JIT crashes"
+
+                        export MONO_ENV_OPTIONS="--interpreter"
 
                         unity-editor \\
                             -batchmode \\
                             -quit \\
+                            -nographics \\
                             -projectPath "${UNITY_PROJECT_PATH}" \\
                             -executeMethod BuildScript.BuildBatchMode \\
                             -logFile /dev/stdout \\
