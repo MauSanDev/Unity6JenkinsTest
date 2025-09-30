@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'unity-agent-1'  // Unity 6000.0.58f1
+        label 'unity-6-android'  // Unity 6000.0.58f1
     }
 
     parameters {
