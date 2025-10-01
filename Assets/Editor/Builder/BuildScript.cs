@@ -133,6 +133,33 @@ class BuildScript {
 
 		Debug.Log($"Builder :: Build Target Parsed: {buildTarget}");
 
+		// Switch Unity's active build target
+		UnityEditor.Build.NamedBuildTarget namedTarget = GetBuildTargetGroup(buildTarget);
+		bool switched = EditorUserBuildSettings.SwitchActiveBuildTarget(namedTarget, buildTarget);
+		if (!switched)
+		{
+			Debug.LogError($"Builder :: Failed to switch to build target: {buildTarget}");
+			return;
+		}
+		Debug.Log($"Builder :: Successfully switched to build target: {buildTarget}");
+
+		// Initialize platform-specific settings based on target
+		IBuildPlatformSettings platformSettings = null;
+		switch (buildTarget)
+		{
+			case BuildTarget.Android:
+				platformSettings = new AndroidParameters();
+				Debug.Log("Builder :: Using AndroidParameters for build");
+				break;
+			case BuildTarget.iOS:
+				platformSettings = new iOSParameters();
+				Debug.Log("Builder :: Using iOSParameters for build");
+				break;
+			default:
+				Debug.LogWarning($"Builder :: No platform-specific settings for {buildTarget}");
+				break;
+		}
+
 		// Get build output path from arguments, or use default fallback
 		string buildOutputPath = args.GetArgument(BuildScript.BUILD_OUTPUT_PATH);
 		if (string.IsNullOrEmpty(buildOutputPath))
@@ -148,6 +175,7 @@ class BuildScript {
 			buildIdentifier = args.GetArgument(BuildScript.BUILD_COMMIT_HASH),
 			buildSuffix = args.GetArgument(BuildScript.BUILD_SUFFIX),
 			buildOutputPath = buildOutputPath,
+			platformSpecificSettings = platformSettings,
 			isDevelopmentBuild = args.GetArgumentAsBool(BuildScript.DEVELOPMENT_BUILD),
 			generateAddressables = args.GetArgumentAsBool(BuildScript.GENERATE_ADDRESSABLES)
 		};
