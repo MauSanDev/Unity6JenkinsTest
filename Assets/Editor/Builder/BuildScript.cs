@@ -48,7 +48,7 @@ class BuildScript {
 			// Unity built-in flags that should be excluded from custom arguments (these use space-separated values)
 			HashSet<string> unityBuiltInFlags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 			{
-				"batchmode", "quit", "nographics", "projectPath", "executeMethod", "logFile", "silent-crashes", "buildTarget"
+				"batchmode", "quit", "nographics", "projectPath", "executeMethod", "logFile", "silent-crashes"
 			};
 
 			string commands = Environment.CommandLine;
@@ -112,10 +112,25 @@ class BuildScript {
 	{
 		CommandLineArguments args = new CommandLineArguments();
 
-		// Unity automatically sets the build target when -buildTarget is passed
-		// Use EditorUserBuildSettings.activeBuildTarget to get it
-		BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
-		Debug.Log($"Builder :: Build Target from Unity: {buildTarget}");
+		// Debug: Log full command line for troubleshooting
+		Debug.Log($"Builder :: Full Command Line: {Environment.CommandLine}");
+		Debug.Log($"Builder :: Parsed Arguments: {args.ToString()}");
+
+		// Parse build target from command line arguments
+		string buildTargetString = args.GetArgument("buildTarget");
+		if (string.IsNullOrEmpty(buildTargetString))
+		{
+			Debug.LogError("Builder :: buildTarget argument is missing or empty!");
+			return;
+		}
+
+		if (!Enum.TryParse(buildTargetString, true, out BuildTarget buildTarget))
+		{
+			Debug.LogError($"Builder :: Error parsing Build Target. Value provided: '{buildTargetString}'");
+			return;
+		}
+
+		Debug.Log($"Builder :: Build Target Parsed: {buildTarget}");
 
 		BuildParameters buildParameters = new BuildParameters()
 		{
@@ -253,10 +268,40 @@ class BuildScript {
 			AddressableAssetSettings.CleanPlayerContent(dataBuilder);
 			AddressableAssetSettings.BuildPlayerContent();
 
-			// Return the path where addressables are built
-			string buildPath = settings.RemoteCatalogBuildPath.GetValue(settings);
-			Debug.Log($"Builder :: Addressables generated at: {buildPath}");
-			return buildPath;
+			// Try multiple path sources to get the addressables build path
+			string buildPath = null;
+
+			// Try 1: Remote catalog build path
+			if (settings.RemoteCatalogBuildPath != null)
+			{
+				buildPath = settings.RemoteCatalogBuildPath.GetValue(settings);
+			}
+
+			// Try 2: Local catalog build path (fallback)
+			if (string.IsNullOrEmpty(buildPath) && settings.LocalCatalogBuildPath != null)
+			{
+				buildPath = settings.LocalCatalogBuildPath.GetValue(settings);
+				Debug.Log("Builder :: Using LocalCatalogBuildPath as fallback.");
+			}
+
+			// Try 3: Default ServerData folder (last resort)
+			if (string.IsNullOrEmpty(buildPath))
+			{
+				buildPath = Path.Combine(Application.dataPath, "..", "ServerData");
+				Debug.Log("Builder :: Using default ServerData path as fallback.");
+			}
+
+			// Validate the path exists
+			if (!string.IsNullOrEmpty(buildPath) && Directory.Exists(buildPath))
+			{
+				Debug.Log($"Builder :: Addressables generated at: {buildPath}");
+				return buildPath;
+			}
+			else
+			{
+				Debug.LogWarning($"Builder :: Addressables path not found or invalid: {buildPath}");
+				return string.Empty;
+			}
 		}
 		catch (Exception ex)
 		{
@@ -301,20 +346,56 @@ class BuildScript {
 	/// </summary>
 	private static void CopyDirectory(string sourceDir, string destinationDir)
 	{
-		Directory.CreateDirectory(destinationDir);
-
-		foreach (string file in Directory.GetFiles(sourceDir))
+		if (string.IsNullOrEmpty(sourceDir) || string.IsNullOrEmpty(destinationDir))
 		{
-			string fileName = Path.GetFileName(file);
-			string destFile = Path.Combine(destinationDir, fileName);
-			File.Copy(file, destFile, true);
+			Debug.LogError($"Builder :: Invalid directory paths. Source: '{sourceDir}', Destination: '{destinationDir}'");
+			return;
 		}
 
+		if (!Directory.Exists(sourceDir))
+		{
+			Debug.LogWarning($"Builder :: Source directory does not exist: {sourceDir}");
+			return;
+		}
+
+		Directory.CreateDirectory(destinationDir);
+
+		// Copy files
+		foreach (string file in Directory.GetFiles(sourceDir))
+		{
+			try
+			{
+				string fileName = Path.GetFileName(file);
+				if (string.IsNullOrEmpty(fileName))
+					continue;
+
+				string destFile = Path.Combine(destinationDir, fileName);
+				File.Copy(file, destFile, true);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"Builder :: Failed to copy file '{file}': {ex.Message}");
+			}
+		}
+
+		// Copy subdirectories
 		foreach (string subDir in Directory.GetDirectories(sourceDir))
 		{
-			string dirName = Path.GetFileName(subDir);
-			string destSubDir = Path.Combine(destinationDir, dirName);
-			CopyDirectory(subDir, destSubDir);
+			try
+			{
+				DirectoryInfo dirInfo = new DirectoryInfo(subDir);
+				string dirName = dirInfo.Name;
+
+				if (string.IsNullOrEmpty(dirName))
+					continue;
+
+				string destSubDir = Path.Combine(destinationDir, dirName);
+				CopyDirectory(subDir, destSubDir);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"Builder :: Failed to copy directory '{subDir}': {ex.Message}");
+			}
 		}
 	}
 
