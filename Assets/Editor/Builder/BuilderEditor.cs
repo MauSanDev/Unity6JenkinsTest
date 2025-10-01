@@ -313,7 +313,16 @@ public struct BuildParameters
     public string GetBuildDirectory()
     {
         string intermediateFolder = isDevelopmentBuild ? BuildScript.FolderDevelopment : debugMode ? BuildScript.FolderQA : BuildScript.FolderRelease;
-        return Path.Combine(buildOutputPath, intermediateFolder, GetBuildName(false));
+        string buildDirectory = Path.Combine(buildOutputPath, intermediateFolder, GetBuildName(false));
+
+        // Create directory if it doesn't exist (creates all nested folders)
+        if (!Directory.Exists(buildDirectory))
+        {
+            Directory.CreateDirectory(buildDirectory);
+            Debug.Log($"Builder :: Created build directory: {buildDirectory}");
+        }
+
+        return buildDirectory;
     }
 
     public string GetBuildName(bool includeExtension)
