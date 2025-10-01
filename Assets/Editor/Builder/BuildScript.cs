@@ -17,7 +17,7 @@ class BuildScript {
 	private const char COMMAND_DELIMITER = '-';
 
 	// Custom Command Line Arguments (All these commands MUST have the COMMAND_DELIMITER as first char on the console to be read.
-	private const string BUILD_TARGET = "buildTarget"; // New argument for BuildTarget
+	// Note: buildTarget is handled by Unity's built-in -buildTarget flag and accessed via EditorUserBuildSettings.activeBuildTarget
 	private const string BUILD_VERSION = "buildVersion"; // Build Version on Device
 	private const string BUILD_SUFFIX = "buildSuffix"; // Differenciator
 	private const string BUILD_COMMIT_HASH = "commitHash"; // Commit where the Build was created
@@ -45,24 +45,46 @@ class BuildScript {
 
 		private Dictionary<string, string> ParseCommandLineArgs()
 		{
-			// Unity built-in flags that should be excluded from custom arguments
+			// Unity built-in flags that should be excluded from custom arguments (these use space-separated values)
 			HashSet<string> unityBuiltInFlags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 			{
-				"batchmode", "quit", "nographics", "projectPath", "executeMethod", "logFile", "silent-crashes"
+				"batchmode", "quit", "nographics", "projectPath", "executeMethod", "logFile", "silent-crashes", "buildTarget"
 			};
 
 			string commands = Environment.CommandLine;
-			return commands.Split(' ')
-				.Where(arg => arg.StartsWith($"{BuildScript.COMMAND_DELIMITER}"))
-				.Select(arg => arg.TrimStart(BuildScript.COMMAND_DELIMITER))
-				.Where(arg => arg.Contains('=')) // Only include arguments with key=value format
-				.Select(arg => arg.Split(new[] { '=' }, 2)) // Split only on first '=' to handle values with '='
-				.Where(parts => !unityBuiltInFlags.Contains(parts[0])) // Filter out Unity built-in flags
-				.GroupBy(parts => parts[0], StringComparer.OrdinalIgnoreCase) // Group by key to handle duplicates
-				.ToDictionary(
-					group => group.Key,
-					group => group.Last()[1], // Take last value if duplicates exist
-					StringComparer.OrdinalIgnoreCase);
+
+			// Parse both formats: -key=value (custom) and -key value (Unity built-in but not filtered)
+			var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			string[] args = commands.Split(' ');
+
+			for (int i = 0; i < args.Length; i++)
+			{
+				if (!args[i].StartsWith($"{BuildScript.COMMAND_DELIMITER}"))
+					continue;
+
+				string arg = args[i].TrimStart(BuildScript.COMMAND_DELIMITER);
+
+				// Handle -key=value format
+				if (arg.Contains('='))
+				{
+					string[] parts = arg.Split(new[] { '=' }, 2);
+					if (!unityBuiltInFlags.Contains(parts[0]))
+					{
+						result[parts[0]] = parts[1];
+					}
+				}
+				// Handle -key value format (space-separated)
+				else if (i + 1 < args.Length && !args[i + 1].StartsWith($"{BuildScript.COMMAND_DELIMITER}"))
+				{
+					if (!unityBuiltInFlags.Contains(arg))
+					{
+						result[arg] = args[i + 1];
+						i++; // Skip the next argument since we consumed it as the value
+					}
+				}
+			}
+
+			return result;
 		}
 
 		public string GetArgument(string key)
@@ -90,11 +112,10 @@ class BuildScript {
 	{
 		CommandLineArguments args = new CommandLineArguments();
 
-		if(!Enum.TryParse(args.GetArgument(BUILD_TARGET), out BuildTarget buildTarget))
-		{
-			Debug.LogError("Error trying to parse Build Target");
-			return;
-		}
+		// Unity automatically sets the build target when -buildTarget is passed
+		// Use EditorUserBuildSettings.activeBuildTarget to get it
+		BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+		Debug.Log($"Builder :: Build Target from Unity: {buildTarget}");
 
 		BuildParameters buildParameters = new BuildParameters()
 		{
