@@ -110,6 +110,7 @@ pipeline {
                             -buildSuffix "${buildSuffix}" \\
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
+                            -buildOutputPath "Builds" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
                             -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee android-build.log || echo "Unity build completed with exit code \$?"
                     """
@@ -154,6 +155,7 @@ pipeline {
                             -buildSuffix "${buildSuffix}" \\
                             -commitHash "${commitHash}" \\
                             -buildId "${BUILD_NUMBER}" \\
+                            -buildOutputPath "Builds" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
                             -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee webgl-build.log || echo "Unity build completed with exit code \$?"
                     """

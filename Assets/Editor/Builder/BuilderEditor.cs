@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
-using UnityEditor.Android;
 using UnityEngine;
 
 public class BuilderEditor : EditorWindow
@@ -19,7 +18,7 @@ public class BuilderEditor : EditorWindow
     private string buildSuffix = null;
     private bool generateAddressableAssets = true;
     private bool developmentBuild = false;
-    private string buildDirectory = null;
+    private string buildOutputPath = null;
     private bool saveBuildReport = true;
     private bool debugMode = true;
     private IBuildPlatformSettings platformSettings = null;
@@ -30,7 +29,7 @@ public class BuilderEditor : EditorWindow
     {
         buildTarget = BuildTarget.Android;
         platformSettings = new AndroidParameters();
-        buildDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Builds");
+        buildOutputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Builds");
         buildVersion = PlayerSettings.bundleVersion;
     }
 
@@ -132,10 +131,10 @@ public class BuilderEditor : EditorWindow
         debugMode = EditorGUILayout.Toggle("Debug Mode", debugMode);
 
         EditorGUILayout.BeginHorizontal();
-        buildDirectory = EditorGUILayout.TextField("Build Directory", buildDirectory);
+        buildOutputPath = EditorGUILayout.TextField("Build Output Path", buildOutputPath);
         if (GUILayout.Button("Select", GUILayout.Width(100)))
         {
-            buildDirectory = EditorUtility.OpenFolderPanel("Select Directory for the Build", "", "");
+            buildOutputPath = EditorUtility.OpenFolderPanel("Select Directory for the Build", "", "");
         }
         EditorGUILayout.EndHorizontal();
 
@@ -158,7 +157,7 @@ public class BuilderEditor : EditorWindow
         {
             buildTarget = buildTarget,
             buildVersion = buildVersion,
-            buildDirectory = buildDirectory,
+            buildOutputPath = buildOutputPath,
             buildSuffix = buildSuffix,
             buildIdentifier = "local" + ToEpoch(DateTime.Now),
             isDevelopmentBuild = developmentBuild,
@@ -276,7 +275,7 @@ public struct BuildParameters
     public string buildSuffix;
     public bool generateAddressables;
     public bool isDevelopmentBuild;
-    public string buildDirectory;
+    public string buildOutputPath;
     public string buildIdentifier;
     public IBuildPlatformSettings platformSpecificSettings;
     public bool saveBuildReport;
@@ -289,7 +288,7 @@ public struct BuildParameters
             - Version: {buildVersion} \n
             - Target: {buildTarget} |n
             - Suffix: {buildSuffix} \n
-            - Directory: {buildDirectory} \n
+            - Output Path: {buildOutputPath} \n
             - Development: {isDevelopmentBuild} \n
             - Addressables: {generateAddressables} \n";
     }
@@ -314,7 +313,7 @@ public struct BuildParameters
     public string GetBuildDirectory()
     {
         string intermediateFolder = isDevelopmentBuild ? BuildScript.FolderDevelopment : debugMode ? BuildScript.FolderQA : BuildScript.FolderRelease;
-        return Path.Combine(buildDirectory, intermediateFolder, GetBuildName(false));
+        return Path.Combine(buildOutputPath, intermediateFolder, GetBuildName(false));
     }
 
     public string GetBuildName(bool includeExtension)

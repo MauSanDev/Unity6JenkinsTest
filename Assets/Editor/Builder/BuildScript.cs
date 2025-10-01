@@ -22,6 +22,7 @@ class BuildScript {
 	private const string BUILD_SUFFIX = "buildSuffix"; // Differenciator
 	private const string BUILD_COMMIT_HASH = "commitHash"; // Commit where the Build was created
 	private const string BUILD_ID = "buildId"; // Used to create the folder when the Build will be created (Used with Jenkins Job Number)
+	private const string BUILD_OUTPUT_PATH = "buildOutputPath"; // Base directory where builds will be output
 
 	private const string GENERATE_ADDRESSABLES = "generateAddressables"; //If TRUE, compile Addressables (if empty or false, doesn't compile addressables)
 	private const string DEVELOPMENT_BUILD = "developmentBuild"; // If TRUE, build will be a Development version (if empty or false, will be normal build)
@@ -132,12 +133,21 @@ class BuildScript {
 
 		Debug.Log($"Builder :: Build Target Parsed: {buildTarget}");
 
+		// Get build output path from arguments, or use default fallback
+		string buildOutputPath = args.GetArgument(BuildScript.BUILD_OUTPUT_PATH);
+		if (string.IsNullOrEmpty(buildOutputPath))
+		{
+			buildOutputPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Builds");
+			Debug.Log($"Builder :: No buildOutputPath provided, using default: {buildOutputPath}");
+		}
+
 		BuildParameters buildParameters = new BuildParameters()
 		{
 			buildTarget = buildTarget,
 			buildVersion = args.GetArgument(BuildScript.BUILD_VERSION),
 			buildIdentifier = args.GetArgument(BuildScript.BUILD_COMMIT_HASH),
 			buildSuffix = args.GetArgument(BuildScript.BUILD_SUFFIX),
+			buildOutputPath = buildOutputPath,
 			isDevelopmentBuild = args.GetArgumentAsBool(BuildScript.DEVELOPMENT_BUILD),
 			generateAddressables = args.GetArgumentAsBool(BuildScript.GENERATE_ADDRESSABLES)
 		};
@@ -418,4 +428,6 @@ class BuildScript {
 
 		return scenes;
 	}
+	
+	
 }
