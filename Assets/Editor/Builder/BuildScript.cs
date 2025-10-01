@@ -277,17 +277,21 @@ class BuildScript {
 				buildPath = settings.RemoteCatalogBuildPath.GetValue(settings);
 			}
 
-			// Try 2: Local catalog build path (fallback)
-			if (string.IsNullOrEmpty(buildPath) && settings.LocalCatalogBuildPath != null)
+			// Try 2: Use BuildPath from profile settings (fallback)
+			if (string.IsNullOrEmpty(buildPath) && settings.profileSettings != null)
 			{
-				buildPath = settings.LocalCatalogBuildPath.GetValue(settings);
-				Debug.Log("Builder :: Using LocalCatalogBuildPath as fallback.");
+				var variableNames = settings.profileSettings.GetVariableNames();
+				if (variableNames != null && variableNames.Contains("BuildPath"))
+				{
+					buildPath = settings.profileSettings.GetValueById(settings.activeProfileId, "BuildPath");
+					Debug.Log("Builder :: Using BuildPath from profile settings as fallback.");
+				}
 			}
 
-			// Try 3: Default ServerData folder (last resort)
+			// Try 3: Default ServerData folder in project root (last resort)
 			if (string.IsNullOrEmpty(buildPath))
 			{
-				buildPath = Path.Combine(Application.dataPath, "..", "ServerData");
+				buildPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "ServerData");
 				Debug.Log("Builder :: Using default ServerData path as fallback.");
 			}
 
