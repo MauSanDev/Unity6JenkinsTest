@@ -105,7 +105,7 @@ pipeline {
                             -projectPath "${UNITY_PROJECT_PATH}" \\
                             -executeMethod BuildScript.BuildBatchMode \\
                             -logFile /dev/stdout \\
-                            -buildTarget Android \\
+                            -buildTarget android \\
                             -buildVersion "${buildVersion}" \\
                             -buildSuffix "${buildSuffix}" \\
                             -commitHash "${commitHash}" \\
