@@ -38,9 +38,9 @@ pipeline {
 
     environment {
         UNITY_PROJECT_PATH = "${WORKSPACE}"
-        UNITY_EMAIL = credentials('unity-email')
-        UNITY_PASSWORD = credentials('unity-password')
-        UNITY_SERIAL = credentials('unity-serial')
+        UNITY_EMAIL = credentials('tga-unity-email')
+        UNITY_PASSWORD = credentials('tga-unity-password')
+        UNITY_SERIAL = credentials('tga-unity-serial')
     }
 
     stages {
