@@ -6,7 +6,7 @@ pipeline {
     parameters {
         choice(
             name: 'BUILD_TARGET',
-            choices: ['Android', 'WebGL', 'Both'],
+            choices: ['Android', 'WebGL'],
             description: 'Platform to build for'
         )
         booleanParam(
@@ -51,16 +51,6 @@ pipeline {
             }
         }
 
-        stage('Debug Credentials') {
-            steps {
-                echo "🔍 Verifying Unity credentials are loaded..."
-                echo "Unity Email: ${UNITY_EMAIL}"
-                echo "Unity Serial: ${UNITY_SERIAL}"
-                echo "Unity Password: [MASKED - Jenkins will hide this automatically]"
-                echo "Environment variables set for GameCI activation"
-            }
-        }
-
         stage('Force Clean') {
             when {
                 expression { params.FORCE_CLEAN_BUILD == true }
@@ -75,10 +65,7 @@ pipeline {
 
         stage('Build Android') {
             when {
-                anyOf {
-                    expression { params.BUILD_TARGET == 'Android' }
-                    expression { params.BUILD_TARGET == 'Both' }
-                }
+                expression { params.BUILD_TARGET == 'Android' }
             }
             steps {
                 script {
@@ -112,7 +99,13 @@ pipeline {
                             -buildId "${BUILD_NUMBER}" \\
                             -buildOutputPath "Builds" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
-                            -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee android-build.log || echo "Unity build completed with exit code \$?"
+                            -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee android-build.log
+
+                        UNITY_EXIT_CODE=\${PIPESTATUS[0]}
+                        if [ \$UNITY_EXIT_CODE -ne 0 ]; then
+                            echo "❌ Unity build failed with exit code \$UNITY_EXIT_CODE"
+                            exit \$UNITY_EXIT_CODE
+                        fi
                     """
                 }
             }
@@ -120,10 +113,7 @@ pipeline {
 
         stage('Build WebGL') {
             when {
-                anyOf {
-                    expression { params.BUILD_TARGET == 'WebGL' }
-                    expression { params.BUILD_TARGET == 'Both' }
-                }
+                expression { params.BUILD_TARGET == 'WebGL' }
             }
             steps {
                 script {
@@ -157,7 +147,13 @@ pipeline {
                             -buildId "${BUILD_NUMBER}" \\
                             -buildOutputPath "Builds" \\
                             -generateAddressables ${params.GENERATE_ADDRESSABLES} \\
-                            -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee webgl-build.log || echo "Unity build completed with exit code \$?"
+                            -developmentBuild ${params.DEVELOPMENT_BUILD} 2>&1 | tee webgl-build.log
+
+                        UNITY_EXIT_CODE=\${PIPESTATUS[0]}
+                        if [ \$UNITY_EXIT_CODE -ne 0 ]; then
+                            echo "❌ Unity build failed with exit code \$UNITY_EXIT_CODE"
+                            exit \$UNITY_EXIT_CODE
+                        fi
                     """
                 }
             }
