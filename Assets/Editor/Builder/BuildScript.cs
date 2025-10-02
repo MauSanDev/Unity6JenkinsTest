@@ -240,6 +240,9 @@ class BuildScript {
 		Debug.Log("Builder :: Building Player.");
 		BuildReport report = BuildPipeline.BuildPlayer(buildOptions);
 
+		// Capture build success status
+		parameters.buildSuccess = (report.summary.result == BuildResult.Succeeded);
+
 		// Copy addressables to build output if they were generated
 		if (!string.IsNullOrEmpty(addressablesPath) && report.summary.result == BuildResult.Succeeded)
 		{
@@ -250,7 +253,7 @@ class BuildScript {
 		{
 			SaveBuildReport(report, parameters);
 		}
-		
+
 		Debug.Log("Builder :: Build Status: " + report.summary.result);
 		SaveParameters(parameters);
 		

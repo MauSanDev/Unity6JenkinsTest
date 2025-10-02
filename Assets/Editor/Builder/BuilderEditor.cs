@@ -280,6 +280,7 @@ public struct BuildParameters
     public IBuildPlatformSettings platformSpecificSettings;
     public bool saveBuildReport;
     public bool debugMode;
+    public bool buildSuccess;
 
     public override string ToString()
     {
