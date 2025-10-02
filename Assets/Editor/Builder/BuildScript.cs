@@ -155,6 +155,10 @@ class BuildScript {
 				platformSettings = new iOSParameters();
 				Debug.Log("Builder :: Using iOSParameters for build");
 				break;
+			case BuildTarget.WebGL:
+				platformSettings = new WebGLParameters();
+				Debug.Log("Builder :: Using WebGLParameters for build");
+				break;
 			default:
 				Debug.LogWarning($"Builder :: No platform-specific settings for {buildTarget}");
 				break;
@@ -191,8 +195,10 @@ class BuildScript {
 				return UnityEditor.Build.NamedBuildTarget.Android;
 			case BuildTarget.iOS:
 				return UnityEditor.Build.NamedBuildTarget.iOS;
+			case BuildTarget.WebGL:
+				return UnityEditor.Build.NamedBuildTarget.WebGL;
 			default:
-				return UnityEditor.Build.NamedBuildTarget.Android;
+				return UnityEditor.Build.NamedBuildTarget.Unknown;
 		}
 	}
 

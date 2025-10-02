@@ -47,6 +47,9 @@ public class BuilderEditor : EditorWindow
                 case BuildTarget.iOS:
                     platformSettings = new iOSParameters();
                     break;
+                case BuildTarget.WebGL:
+                    platformSettings = new WebGLParameters();
+                    break;
                 default:
                     platformSettings = null;
                     break;
@@ -266,7 +269,50 @@ public class iOSParameters : IBuildPlatformSettings
     public string GetExtension() => "ipa";
 }
 
-    
+[Serializable]
+public class WebGLParameters : IBuildPlatformSettings
+{
+    public WebGLCompressionFormat compressionFormat = WebGLCompressionFormat.Brotli;
+    public WebGLExceptionSupport exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
+    public WebGLLinkerTarget linkerTarget = WebGLLinkerTarget.Wasm;
+    public bool dataCaching = true;
+    public int memorySizeMB = 256;
+
+    public void OnGUI()
+    {
+        EditorGUILayout.BeginVertical("HelpBox");
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("WebGL Settings", EditorStyles.boldLabel);
+        if (GUILayout.Button("Player Settings", EditorStyles.miniButton, GUILayout.Width(120)))
+        {
+            SettingsService.OpenProjectSettings("Project/Player");
+        }
+        EditorGUILayout.EndHorizontal();
+
+        compressionFormat = (WebGLCompressionFormat)EditorGUILayout.EnumPopup("Compression Format", compressionFormat);
+        exceptionSupport = (WebGLExceptionSupport)EditorGUILayout.EnumPopup("Exception Support", exceptionSupport);
+        linkerTarget = (WebGLLinkerTarget)EditorGUILayout.EnumPopup("Linker Target", linkerTarget);
+        dataCaching = EditorGUILayout.Toggle("Data Caching", dataCaching);
+        memorySizeMB = EditorGUILayout.IntSlider("Memory Size (MB)", memorySizeMB, 16, 2048);
+
+        EditorGUILayout.EndVertical();
+    }
+
+    public void ApplyTo(BuildPlayerOptions options) {}
+
+    public void ApplyPlatformModifiers()
+    {
+        PlayerSettings.WebGL.compressionFormat = compressionFormat;
+        PlayerSettings.WebGL.exceptionSupport = exceptionSupport;
+        PlayerSettings.WebGL.linkerTarget = linkerTarget;
+        PlayerSettings.WebGL.dataCaching = dataCaching;
+        PlayerSettings.WebGL.memorySize = memorySizeMB;
+    }
+
+    public string GetExtension() => string.Empty; // WebGL builds to a folder, not a single file
+}
+
+
 [Serializable]
 public struct BuildParameters
 {
