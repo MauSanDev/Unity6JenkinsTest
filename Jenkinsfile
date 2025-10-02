@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'android-6.2.5f1'  // Unity 6000.0.58f1 with complete Android image
+        label 'unity-6000.2.5f1-android-3'  // Unity 6000.0.58f1 with complete Android image
     }
 
     parameters {
